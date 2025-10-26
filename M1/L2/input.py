@@ -1,0 +1,7 @@
+name = input("Enter your name : ")
+age = input("Enter your age : ")
+city = input("Enter your city name : ")
+grade = input("Enter your grade : ")
+hungry = input("Are you hungry? Answer in True or False : ")
+print(f"Hi {name}. You are {age}years old. Your from {city}. You are in grade {grade}")
+print(f"You are hungry {hungry}.")
