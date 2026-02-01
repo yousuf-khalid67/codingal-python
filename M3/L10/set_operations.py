@@ -1,5 +1,5 @@
-set1={1,4,6,88,7,4}
-set2={4,1,99,4,5,11}
-print(set1.union(set2))
-print(set1.intersection(set2))
-print(set1.difference(set2))
+list_1=[1, 5, 10, 20]
+list_2=[5, 20, 30, 40]
+print(list_1(list_2))
+print(list_1.intersection(list_2))
+print(list_1.difference(list_2))
