@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upgrade Your Plane ✈️</title>
+    <style>
+        /* ===================== GLOBAL STYLES ===================== */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --sky: #0a0e1a;
+            --blue: #0d6efd;
+            --cyan: #00d4ff;
+            --gold: #ffc107;
+            --red: #ff3b5c;
+            --green: #00e676;
+            --panel: rgba(10, 20, 40, 0.92);
+            --border: #1a3a6a;
+            --text: #c8d8f0;
+            --glow: 0 0 16px #00d4ff88;
+        }
+
+        body {
+            background: var(--sky);
+            color: var(--text);
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+            user-select: none;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* ===================== OVERLAY SCREENS ===================== */
+        .screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(5, 10, 20, 0.96);
+            z-index: 10;
+            transition: opacity 0.4s;
+        }
+
+        .screen.hidden {
+            display: none;
+        }
+
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 900;
+            color: var(--cyan);
+            text-shadow: 0 0 30px #00d4ffaa, 0 0 60px #00d4ff44;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.2em;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #5580aa;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            margin-bottom: 2.5rem;
+        }
+
+        .btn {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            padding: 0.75em 2em;
+            margin: 0.4em;
+            border: 2px solid var(--cyan);
+            color: var(--cyan);
+            background: transparent;
+            cursor: pointer;
+            clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+            min-width: 200px;
+        }
+
+        .btn:hover {
+            background: var(--cyan);
+            color: #000;
+            box-shadow: var(--glow);
+        }
+
+        .btn.gold {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .btn.gold:hover {
+            background: var(--gold);
+            color: #000;
+            box-shadow: 0 0 16px #ffc10788;
+        }
+
+        .btn.red {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .btn.red:hover {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .btn.green {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .btn.green:hover {
+            background: var(--green);
+            color: #000;
+        }
+
+        .mode-cards {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mode-card {
+            border: 2px solid var(--border);
+            padding: 1.5rem 2rem;
+            background: var(--panel);
+            cursor: pointer;
+            text-align: center;
+            clip-path: polygon(12px 0%, 100% 0%, calc(100%-12px) 100%, 0% 100%);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            min-width: 200px;
+        }
+
+        .mode-card:hover {
+            border-color: var(--cyan);
+            box-shadow: var(--glow);
+        }
+
+        .mode-card h3 {
+            font-family: 'Orbitron', monospace;
+            color: var(--cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .mode-card p {
+            font-size: 0.9rem;
+            color: #7090b0;
+        }
+
+        /* High score display */
+        .hs-row {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .hs-box {
+            text-align: center;
+        }
+
+        .hs-box .label {
+            font-size: 0.75rem;
+            color: #5580aa;
+            letter-spacing: 0.2em;
+        }
+
+        .hs-box .val {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.4rem;
+            color: var(--gold);
+        }
+
+        /* ===================== HUD ===================== */
+        #hud {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        #hud-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 10px 16px;
+            background: linear-gradient(180deg, rgba(5, 10, 25, 0.9) 0%, transparent 100%);
+        }
+
+        .hud-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hud-label {
+            font-size: 0.65rem;
+            color: #4466aa;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .hud-val {
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .hud-score {
+            color: var(--gold);
+        }
+
+        .hud-dist {
+            color: var(--cyan);
+        }
+
+        .hud-level {
+            color: #c080ff;
+        }
+
+        .bar-wrap {
+            width: 120px;
+        }
+
+        .bar-bg {
+            height: 6px;
+            background: #1a2a3a;
+            border-radius: 3px;
+        }
+
+        .bar-fill {
+            height: 6px;
+            border-radius: 3px;
+            transition: width 0.1s;
+        }
+
+        .bar-health {
+            background: linear-gradient(90deg, var(--red), #ff8800);
+        }
+
+        .bar-fuel {
+            background: linear-gradient(90deg, #0066ff, var(--cyan));
+        }
+
+        #hud-right {
+            position: absolute;
+            top: 10px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        /* Active powerups */
+        #powerup-icons {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+        }
+
+        .pu-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            border: 2px solid currentColor;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            position: relative;
+        }
+
+        .pu-timer {
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: currentColor;
+            border-radius: 2px;
+            transform-origin: left;
+        }
+
+        /* Combo banner */
+        #combo-banner {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            color: var(--gold);
+            text-shadow: 0 0 20px var(--gold);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        /* ===================== UPGRADE SCREEN ===================== */
+        #upgrade-screen .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            width: min(700px, 95vw);
+            clip-path: polygon(16px 0%, 100% 0%, calc(100% - 16px) 100%, 0% 100%);
+        }
+
+        #upgrade-screen h2 {
+            font-family: 'Orbitron', monospace;
+            color: var(--cyan);
+            margin-bottom: 0.3rem;
+        }
+
+        .upgrade-pts {
+            color: var(--gold);
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .upgrade-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .upg-card {
+            background: rgba(0, 20, 50, 0.6);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            position: relative;
+        }
+
+        .upg-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--cyan);
+        }
+
+        .upg-desc {
+            font-size: 0.8rem;
+            color: #5580aa;
+            margin: 0.3rem 0;
+        }
+
+        .upg-level {
+            font-size: 0.85rem;
+            color: #7090b0;
+            margin-bottom: 0.5rem;
+        }
+
+        .upg-stars {
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .upg-btn {
+            width: 100%;
+        }
+
+        .upg-max {
+            color: var(--green);
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 0.4rem;
+        }
+
+        /* ===================== GAME OVER ===================== */
+        #gameover-screen .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            width: 360px;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-box .s-label {
+            font-size: 0.7rem;
+            color: #5580aa;
+            letter-spacing: 0.2em;
+        }
+
+        .stat-box .s-val {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            color: var(--cyan);
+        }
+
+        /* Challenge level banner */
+        #level-banner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            color: var(--cyan);
+            text-shadow: var(--glow);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 6;
+        }
+
+        /* Toast messages */
+        #toast {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            color: var(--green);
+            text-shadow: 0 0 10px var(--green);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 7;
+            transition: opacity 0.3s;
+        }
+
+        /* Controls hint */
+        #controls-hint {
+            position: absolute;
+            bottom: 14px;
+            right: 16px;
+            font-size: 0.7rem;
+            color: #2a4060;
+            pointer-events: none;
+            z-index: 5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="hud" class="hidden">
+        <div id="hud-top">
+            <div class="hud-item">
+                <span class="hud-label">Score</span>
+                <span class="hud-val hud-score" id="hud-score">0</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">Distance</span>
+                <span class="hud-val hud-dist" id="hud-dist">0m</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">Level</span>
+                <span class="hud-val hud-level" id="hud-level">—</span>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">Health</span>
+                <div class="bar-wrap">
+                    <div class="bar-bg">
+                        <div class="bar-fill bar-health" id="bar-health" style="width:100%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hud-item">
+                <span class="hud-label">Fuel</span>
+                <div class="bar-wrap">
+                    <div class="bar-bg">
+                        <div class="bar-fill bar-fuel" id="bar-fuel" style="width:100%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hud-item" id="hud-mission-wrap" style="display:none">
+                <span class="hud-label">Mission</span>
+                <span class="hud-val" id="hud-mission" style="color:#c080ff;font-size:0.85rem">—</span>
+            </div>
+        </div>
+        <div id="powerup-icons"></div>
+        <div id="combo-banner">COMBO x<span id="combo-num">1</span></div>
+        <div id="level-banner"></div>
+        <div id="toast"></div>
+        <div id="controls-hint">WASD / ↑↓←→ to move · SPACE boost</div>
+    </div>
+
+    <div class="screen" id="menu-screen">
+        <div class="logo">✈ UPGRADE YOUR PLANE</div>
+        <div class="subtitle">Sky Conquest · Infinite Horizons</div>
+
+        <div class="hs-row">
+            <div class="hs-box">
+                <div class="label">Challenge Best</div>
+                <div class="val" id="hs-challenge">—</div>
+            </div>
+            <div class="hs-box">
+                <div class="label">Infinite Best</div>
+                <div class="val" id="hs-infinite">—</div>
+            </div>
+        </div>
+
+        <div class="mode-cards">
+            <div class="mode-card" id="btn-challenge">
+                <h3>⚔ CHALLENGE</h3>
+                <p>Level-based missions<br>Upgrade between stages</p>
+            </div>
+            <div class="mode-card" id="btn-infinite">
+                <h3>∞ INFINITE</h3>
+                <p>Endless survival<br>Random power-ups</p>
+            </div>
+        </div>
+        <button class="btn" id="btn-how">HOW TO PLAY</button>
+    </div>
+
+    <div class="screen hidden" id="howto-screen">
+        <div class="logo" style="font-size:2rem">HOW TO PLAY</div>
+        <div style="max-width:500px;text-align:center;line-height:1.8;color:#8ab0d0;margin-bottom:1.5rem">
+            <p><b style="color:var(--cyan)">Move:</b> WASD or Arrow Keys</p>
+            <p><b style="color:var(--cyan)">Boost:</b> SPACE (uses extra fuel)</p>
+            <p><b style="color:var(--gold)">⛽ Fuel:</b> Collect fuel canisters — runs out = crash!</p>
+            <p><b style="color:var(--red)">💥 Obstacles:</b> Mountains, birds, missiles — avoid them</p>
+            <p><b style="color:var(--green)">Power-ups:</b> Shield 🛡 · Fuel ⛽ · Boost ⚡ · Slow ❄ · Magnet 🧲</p>
+            <p><b style="color:#c080ff">Upgrades:</b> Spend points after each challenge level</p>
+            <p style="color:#4a7090;margin-top:1rem">No damage = COMBO MULTIPLIER bonus!</p>
+        </div>
+        <button class="btn" id="btn-howto-back">BACK</button>
+    </div>
+
+    <div class="screen hidden" id="upgrade-screen">
+        <div class="panel">
+            <h2>🔧 UPGRADE HANGAR</h2>
+            <div class="upgrade-pts">Points available: <span id="upg-points">0</span></div>
+            <div class="upgrade-grid" id="upgrade-grid"></div>
+            <div style="text-align:center">
+                <button class="btn green" id="btn-continue">CONTINUE TO NEXT LEVEL ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen hidden" id="gameover-screen">
+        <div class="logo" id="go-title">GAME OVER</div>
+        <div class="stats">
+            <div class="stat-box">
+                <div class="s-label">Score</div>
+                <div class="s-val" id="go-score">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="s-label">Distance</div>
+                <div class="s-val" id="go-dist">0m</div>
+            </div>
+            <div class="stat-box">
+                <div class="s-label">Level</div>
+                <div class="s-val" id="go-level">—</div>
+            </div>
+            <div class="stat-box">
+                <div class="s-label">Best</div>
+                <div class="s-val" id="go-best">0</div>
+            </div>
+        </div>
+        <div id="go-new-best"
+            style="color:var(--gold);font-family:'Orbitron',monospace;margin-bottom:1rem;display:none">🏆 NEW HIGH
+            SCORE!</div>
+        <button class="btn" id="btn-play-again">PLAY AGAIN</button>
+        <button class="btn" id="btn-go-menu" style="margin-top:0.5rem">MAIN MENU</button>
+    </div>
+
+    <script>
+        'use strict';
+        // ============================================================
+        //  UTILITY HELPERS
+        // ============================================================
+        const $ = id => document.getElementById(id);
+        const clamp = (v, mn, mx) => Math.min(Math.max(v, mn), mx);
+        const rnd = (a, b) => Math.random() * (b - a) + a;
+        const rndI = (a, b) => Math.floor(rnd(a, b + 1));
+        const lerp = (a, b, t) => a + (b - a) * t;
+        const PI2 = Math.PI * 2;
+
+        // ============================================================
+        //  CANVAS SETUP
+        // ============================================================
+        const canvas = $('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let W = 0, H = 0;
+        function resize() {
+            W = canvas.width = window.innerWidth;
+            H = canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // ============================================================
+        //  INPUT HANDLER
+        // ============================================================
+        const Input = {
+            keys: {},
+            init() {
+                window.addEventListener('keydown', e => { this.keys[e.code] = true; e.preventDefault(); });
+                window.addEventListener('keyup', e => { this.keys[e.code] = false; });
+            },
+            is(code) { return !!this.keys[code]; },
+            up() { return this.is('ArrowUp') || this.is('KeyW'); },
+            down() { return this.is('ArrowDown') || this.is('KeyS'); },
+            left() { return this.is('ArrowLeft') || this.is('KeyA'); },
+            right() { return this.is('ArrowRight') || this.is('KeyD'); },
+            boost() { return this.is('Space'); }
+        };
+        Input.init();
+
+        // ============================================================
+        //  PARTICLE SYSTEM
+        // ============================================================
+        class Particle {
+            constructor(x, y, vx, vy, life, size, color, gravity = 0) {
+                Object.assign(this, { x, y, vx, vy, life, maxLife: life, size, color, gravity, alpha: 1 });
+            }
+            update(dt) {
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                this.vy += this.gravity * dt;
+                this.life -= dt;
+                this.alpha = this.life / this.maxLife;
+            }
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, PI2);
+                ctx.fill();
+                ctx.restore();
+            }
+            get dead() { return this.life <= 0; }
+        }
+
+        class ParticleSystem {
+            constructor() { this.particles = []; }
+            add(p) { this.particles.push(p); }
+            emit(x, y, count, opts = {}) {
+                for (let i = 0; i < count; i++) {
+                    const ang = opts.dir !== undefined ? opts.dir + rnd(-opts.spread || 0, opts.spread || 0) : rnd(0, PI2);
+                    const spd = rnd(opts.minSpd || 20, opts.maxSpd || 80);
+                    this.add(new Particle(
+                        x + rnd(-4, 4), y + rnd(-4, 4),
+                        Math.cos(ang) * spd, Math.sin(ang) * spd,
+                        rnd(opts.minLife || 0.3, opts.maxLife || 1),
+                        rnd(opts.minSz || 1, opts.maxSz || 4),
+                        opts.colors ? opts.colors[rndI(0, opts.colors.length - 1)] : (opts.color || '#fff'),
+                        opts.gravity || 0
+                    ));
+                }
+            }
+            update(dt) { this.particles = this.particles.filter(p => { p.update(dt); return !p.dead; }); }
+            draw(ctx) { this.particles.forEach(p => p.draw(ctx)); }
+            clear() { this.particles = []; }
+        }
+
+        // ============================================================
+        //  SCREEN SHAKE
+        // ============================================================
+        const Shake = {
+            intensity: 0, duration: 0,
+            trigger(i, d) { this.intensity = Math.max(this.intensity, i); this.duration = Math.max(this.duration, d); },
+            update(dt) { if (this.duration > 0) { this.duration -= dt; } else { this.intensity = lerp(this.intensity, 0, 0.2); } },
+            offset() { return this.intensity > 0.5 ? { x: rnd(-this.intensity, this.intensity), y: rnd(-this.intensity, this.intensity) } : { x: 0, y: 0 }; }
+        };
+
+        // ============================================================
+        //  ENVIRONMENT / BIOMES
+        // ============================================================
+        const BIOMES = [
+            { name: 'Sky', skyTop: '#0a0e2a', skyBot: '#1a4080', cloudCol: 'rgba(200,220,255,', starAlpha: 0.7 },
+            { name: 'Desert', skyTop: '#2a1a00', skyBot: '#c04010', cloudCol: 'rgba(255,200,150,', starAlpha: 0.0 },
+            { name: 'Night', skyTop: '#000005', skyBot: '#0a0a30', cloudCol: 'rgba(80,90,140,', starAlpha: 1.0 },
+            { name: 'Arctic', skyTop: '#102030', skyBot: '#80c8e8', cloudCol: 'rgba(220,240,255,', starAlpha: 0.3 },
+        ];
+
+        // ============================================================
+        //  UPGRADE SYSTEM
+        // ============================================================
+        const UPGRADES = [
+            { id: 'speed', name: 'Engine Thrust', icon: '🚀', desc: 'Increases max speed', max: 5 },
+            { id: 'fuel', name: 'Fuel Tank', icon: '⛽', desc: 'Increases fuel capacity', max: 5 },
+            { id: 'control', name: 'Maneuverability', icon: '🎮', desc: 'Improves control sensitivity', max: 5 },
+            { id: 'health', name: 'Armour Plating', icon: '🛡', desc: 'Increases max health', max: 5 },
+        ];
+
+        class UpgradeSystem {
+            constructor() {
+                this.levels = { speed: 0, fuel: 0, control: 0, health: 0 };
+                this.points = 0;
+            }
+            cost(id) { return (this.levels[id] + 1) * 100; }
+            canBuy(id) { return this.levels[id] < 5 && this.points >= this.cost(id); }
+            buy(id) {
+                if (!this.canBuy(id)) return false;
+                this.points -= this.cost(id);
+                this.levels[id]++;
+                return true;
+            }
+            get speedMult() { return 1 + this.levels.speed * 0.18; }
+            get fuelMax() { return 100 + this.levels.fuel * 30; }
+            get controlMult() { return 1 + this.levels.control * 0.25; }
+            get healthMax() { return 100 + this.levels.health * 40; }
+        }
+
+        // ============================================================
+        //  PLANE CLASS
+        // ============================================================
+        class Plane {
+            constructor(upgrades) {
+                this.upgrades = upgrades;
+                this.reset();
+            }
+            reset() {
+                const u = this.upgrades;
+                this.x = W * 0.2;
+                this.y = H * 0.5;
+                this.vx = 0; this.vy = 0;
+                this.baseSpeed = 180 * u.speedMult;
+                this.health = u.healthMax;
+                this.maxHealth = u.healthMax;
+                this.fuel = u.fuelMax;
+                this.maxFuel = u.fuelMax;
+                this.tilt = 0;
+                this.invincible = 0;  // seconds of invincibility
+                this.trail = [];
+                this.boostTimer = 0;
+                this.width = 64;
+                this.height = 28;
+                // Active power-ups: {type, timeLeft, totalTime}
+                this.powerups = [];
+            }
+            hasPowerup(type) { return this.powerups.some(p => p.type === type); }
+            addPowerup(type, duration) {
+                const ex = this.powerups.find(p => p.type === type);
+                if (ex) { ex.timeLeft = duration; ex.totalTime = duration; }
+                else this.powerups.push({ type, timeLeft: duration, totalTime: duration });
+            }
+            removePowerup(type) { this.powerups = this.powerups.filter(p => p.type !== type); }
+
+            get speed() {
+                let s = this.baseSpeed;
+                if (this.hasPowerup('boost')) s *= 1.6;
+                if (this.hasPowerup('slow')) s *= 0.5;
+                return s;
+            }
+
+            update(dt, windX, windY) {
+                const u = this.upgrades;
+                const ctrl = 280 * u.controlMult;
+
+                // Target velocity based on input
+                let tvx = 0, tvy = 0;
+                if (Input.left()) tvx -= ctrl;
+                if (Input.right()) tvx += ctrl;
+                if (Input.up()) tvy -= ctrl;
+                if (Input.down()) tvy += ctrl;
+
+                // Boost
+                if (Input.boost() && this.fuel > 0) {
+                    this.boostTimer += dt;
+                    const bdir = tvx !== 0 || tvy !== 0 ? { x: tvx, y: tvy } : { x: ctrl, y: 0 };
+                    const mag = Math.hypot(bdir.x, bdir.y) || 1;
+                    tvx = bdir.x / mag * ctrl * 1.4;
+                    tvy = bdir.y / mag * ctrl * 1.4;
+                    this.fuel -= 30 * dt;
+                } else { this.boostTimer = 0; }
+
+                // Wind
+                tvx += windX * 40;
+                tvy += windY * 40;
+
+                // Smooth acceleration
+                this.vx = lerp(this.vx, tvx, 8 * dt);
+                this.vy = lerp(this.vy, tvy, 8 * dt);
+
+                // Update position
+                this.x = clamp(this.x + this.vx * dt, 40, W * 0.45);
+                this.y = clamp(this.y + this.vy * dt, 20, H - 20);
+
+                // Tilt
+                this.tilt = lerp(this.tilt, this.vy / ctrl * 0.5, 10 * dt);
+
+                // Fuel consumption
+                const fuelRate = 4 + (this.hasPowerup('boost') ? 8 : 0);
+                this.fuel = Math.max(0, this.fuel - fuelRate * dt);
+
+                // Invincibility timer
+                if (this.invincible > 0) this.invincible -= dt;
+
+                // Update power-ups
+                this.powerups = this.powerups.filter(p => {
+                    p.timeLeft -= dt;
+                    return p.timeLeft > 0;
+                });
+
+                // Trail
+                this.trail.push({ x: this.x - 16, y: this.y, t: 0.8 });
+                if (this.trail.length > 25) this.trail.shift();
+                this.trail.forEach(t => t.t -= dt * 1.2);
+                this.trail = this.trail.filter(t => t.t > 0);
+            }
+
+            takeDamage(amount) {
+                if (this.invincible > 0 || this.hasPowerup('shield')) return false;
+                this.health = Math.max(0, this.health - amount);
+                this.invincible = 1.5;
+                return true;
+            }
+
+            draw(ctx, ps) {
+                // Trail
+                this.trail.forEach((t, i) => {
+                    ctx.save();
+                    ctx.globalAlpha = t.t * 0.35;
+                    ctx.fillStyle = this.hasPowerup('boost') ? '#00ffaa' : '#4488ff';
+                    ctx.beginPath();
+                    ctx.ellipse(t.x, t.y, 10 * (t.t), 4 * (t.t), 0, 0, PI2);
+                    ctx.fill();
+                    ctx.restore();
+                });
+
+                // Engine exhaust particles
+                if (Math.random() < 0.6) {
+                    ps.emit(this.x - 30, this.y, 2, {
+                        dir: Math.PI, spread: 0.4,
+                        minSpd: 40, maxSpd: 100,
+                        minLife: 0.1, maxLife: 0.35,
+                        minSz: 1, maxSz: 3,
+                        colors: this.hasPowerup('boost') ? ['#00ffaa', '#ffff00', '#fff'] : ['#ffaa44', '#ff6600', '#ffdd00'],
+                        gravity: 0
+                    });
+                }
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.tilt);
+
+                // Invincibility flash
+                if (this.invincible > 0 && Math.floor(this.invincible * 8) % 2 === 0) {
+                    ctx.globalAlpha = 0.4;
+                }
+
+                // Shield glow
+                if (this.hasPowerup('shield')) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.25;
+                    ctx.strokeStyle = '#00d4ff'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.arc(0, 0, 38, 0, PI2); ctx.stroke();
+                    ctx.restore();
+                }
+
+                // Fuselage
+                ctx.fillStyle = '#b0c8e8';
+                ctx.beginPath();
+                ctx.moveTo(36, 0); ctx.lineTo(-20, -9); ctx.lineTo(-32, -6);
+                ctx.lineTo(-32, 6); ctx.lineTo(-20, 9); ctx.closePath();
+                ctx.fill();
+
+                // Main wing
+                ctx.fillStyle = '#7090c8';
+                ctx.beginPath();
+                ctx.moveTo(4, -8); ctx.lineTo(-14, -30); ctx.lineTo(-22, -28);
+                ctx.lineTo(-18, 0); ctx.lineTo(4, 8);
+                ctx.lineTo(-14, 30); ctx.lineTo(-22, 28); ctx.lineTo(-18, 0);
+                ctx.closePath();
+                ctx.fill();
+
+                // Tail fin
+                ctx.fillStyle = '#5070a8';
+                ctx.beginPath();
+                ctx.moveTo(-20, 0); ctx.lineTo(-32, -18); ctx.lineTo(-32, -7); ctx.closePath();
+                ctx.fill();
+
+                // Cockpit glass
+                ctx.fillStyle = 'rgba(180,230,255,0.8)';
+                ctx.beginPath();
+                ctx.ellipse(16, -2, 10, 6, -0.2, 0, PI2);
+                ctx.fill();
+
+                // Engine stripe
+                ctx.fillStyle = '#ff4422';
+                ctx.fillRect(-28, -3, 6, 6);
+
+                ctx.restore();
+            }
+
+            get dead() { return this.health <= 0 || this.fuel <= 0; }
+            get bounds() { return { x: this.x - 28, y: this.y - 12, w: 56, h: 24 }; }
+        }
+
+        // ============================================================
+        //  OBSTACLES
+        // ============================================================
+        class Obstacle {
+            constructor(x, y, type, speed) {
+                this.x = x; this.y = y; this.type = type; this.speed = speed;
+                this.alive = true;
+                this.angle = 0;
+                switch (type) {
+                    case 'mountain': this.w = 70; this.h = 110; this.color = '#4a3830'; break;
+                    case 'building': this.w = 40; this.h = rnd(60, 140); this.color = '#2a3040'; break;
+                    case 'bird': this.w = 24; this.h = 14; this.color = '#333';
+                        this.vy = rnd(-60, 60); this.flapTimer = 0; break;
+                    case 'missile': this.w = 36; this.h = 10; this.color = '#cc3300';
+                        this.vy = rnd(-30, 30); this.angle = Math.atan2(this.vy, this.speed); break;
+                    case 'balloon': this.w = 30; this.h = 50; this.color = '#cc0066'; this.vy = rnd(-20, 20); break;
+                }
+            }
+
+            update(dt) {
+                this.x -= this.speed * dt;
+                if (this.type === 'bird') {
+                    this.flapTimer += dt;
+                    this.y += this.vy * dt;
+                    if (this.y < 50 || this.y > H - 50) this.vy *= -1;
+                }
+                if (this.type === 'missile') {
+                    this.y += this.vy * dt;
+                    if (this.y < 40 || this.y > H - 40) this.vy *= -1;
+                }
+                if (this.type === 'balloon') {
+                    this.y += Math.sin(Date.now() / 1200) * 0.5;
+                }
+                if (this.x < -150) this.alive = false;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                switch (this.type) {
+                    case 'mountain': {
+                        ctx.fillStyle = this.color;
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, H);
+                        ctx.lineTo(this.x + this.w / 2, H - this.h);
+                        ctx.lineTo(this.x + this.w, H);
+                        ctx.closePath(); ctx.fill();
+                        // Snow cap
+                        ctx.fillStyle = '#ddeeff';
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + this.w / 2, H - this.h);
+                        ctx.lineTo(this.x + this.w / 2 - 14, H - this.h + 28);
+                        ctx.lineTo(this.x + this.w / 2 + 14, H - this.h + 28);
+                        ctx.closePath(); ctx.fill();
+                        break;
+                    }
+                    case 'building': {
+                        ctx.fillStyle = this.color;
+                        ctx.fillRect(this.x, H - this.h, this.w, this.h);
+                        // Windows
+                        ctx.fillStyle = 'rgba(255,200,50,0.4)';
+                        for (let wy = H - this.h + 10; wy < H - 10; wy += 20) {
+                            for (let wx = this.x + 6; wx < this.x + this.w - 6; wx += 16) {
+                                if (Math.random() > 0.4) ctx.fillRect(wx, wy, 8, 10);
+                            }
+                        }
+                        break;
+                    }
+                    case 'bird': {
+                        const flap = Math.sin(this.flapTimer * 10) * 0.4;
+                        ctx.fillStyle = this.color;
+                        // Body
+                        ctx.beginPath(); ctx.ellipse(this.x, this.y, 10, 5, 0, 0, PI2); ctx.fill();
+                        // Wings
+                        ctx.strokeStyle = this.color; ctx.lineWidth = 2;
+                        ctx.beginPath(); ctx.moveTo(this.x - 10, this.y); ctx.quadraticCurveTo(this.x - 6, this.y - 14 * Math.cos(flap), this.x, this.y); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(this.x + 10, this.y); ctx.quadraticCurveTo(this.x + 6, this.y - 14 * Math.cos(flap), this.x, this.y); ctx.stroke();
+                        break;
+                    }
+                    case 'missile': {
+                        ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+                        ctx.fillStyle = this.color;
+                        ctx.beginPath(); ctx.moveTo(18, 0); ctx.lineTo(-16, -5); ctx.lineTo(-16, 5); ctx.closePath(); ctx.fill();
+                        ctx.fillStyle = '#ff8800';
+                        ctx.beginPath(); ctx.moveTo(-16, -3); ctx.lineTo(-26, 0); ctx.lineTo(-16, 3); ctx.closePath(); ctx.fill();
+                        break;
+                    }
+                    case 'balloon': {
+                        // Balloon
+                        ctx.fillStyle = this.color;
+                        ctx.beginPath(); ctx.ellipse(this.x, this.y - 20, 12, 18, 0, 0, PI2); ctx.fill();
+                        // String and basket
+                        ctx.strokeStyle = '#996633'; ctx.lineWidth = 1;
+                        ctx.beginPath(); ctx.moveTo(this.x, this.y - 2); ctx.lineTo(this.x, this.y + 14); ctx.stroke();
+                        ctx.fillStyle = '#8B6914';
+                        ctx.fillRect(this.x - 7, this.y + 14, 14, 10);
+                        break;
+                    }
+                }
+                ctx.restore();
+            }
+
+            get bounds() {
+                switch (this.type) {
+                    case 'mountain': return { x: this.x + 10, y: H - this.h, w: this.w - 20, h: this.h };
+                    case 'building': return { x: this.x, y: H - this.h, w: this.w, h: this.h };
+                    case 'bird': return { x: this.x - 10, y: this.y - 8, w: 20, h: 16 };
+                    case 'missile': return { x: this.x - 16, y: this.y - 5, w: 34, h: 10 };
+                    case 'balloon': return { x: this.x - 12, y: this.y - 38, w: 24, h: 50 };
+                    default: return { x: this.x, y: this.y, w: this.w, h: this.h };
+                }
+            }
+        }
+
+        // ============================================================
+        //  POWER-UP COLLECTIBLES
+        // ============================================================
+        const PU_TYPES = [
+            { type: 'fuel', icon: '⛽', color: '#00aaff', label: 'FUEL REFILL' },
+            { type: 'shield', icon: '🛡', color: '#00d4ff', label: 'SHIELD' },
+            { type: 'boost', icon: '⚡', color: '#ffff00', label: 'SPEED BOOST' },
+            { type: 'slow', icon: '❄', color: '#aaeeff', label: 'SLOW MOTION' },
+            { type: 'magnet', icon: '🧲', color: '#ff88cc', label: 'MAGNET' },
+        ];
+
+        class Collectible {
+            constructor(x, y, typeObj) {
+                this.x = x; this.y = y;
+                Object.assign(this, typeObj);
+                this.alive = true;
+                this.t = 0;
+                this.r = 18;
+            }
+            update(dt, speed) {
+                this.x -= speed * dt;
+                this.t += dt;
+                if (this.x < -50) this.alive = false;
+            }
+            draw(ctx) {
+                const bob = Math.sin(this.t * 2) * 4;
+                ctx.save();
+                ctx.translate(this.x, this.y + bob);
+                // Glow
+                ctx.save();
+                ctx.globalAlpha = 0.3 + Math.sin(this.t * 3) * 0.15;
+                ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(0, 0, this.r + 6, 0, PI2); ctx.fill();
+                ctx.restore();
+                // Circle
+                ctx.fillStyle = 'rgba(10,20,40,0.8)';
+                ctx.beginPath(); ctx.arc(0, 0, this.r, 0, PI2); ctx.fill();
+                ctx.strokeStyle = this.color; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(0, 0, this.r, 0, PI2); ctx.stroke();
+                // Icon
+                ctx.font = `${this.r}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(this.icon, 0, 1);
+                ctx.restore();
+            }
+            get bounds() { return { x: this.x - this.r, y: this.y - this.r, w: this.r * 2, h: this.r * 2 }; }
+        }
+
+        // ============================================================
+        //  CHECKPOINT / RING
+        // ============================================================
+        class Checkpoint {
+            constructor(x, y, gap = 80) {
+                this.x = x; this.y = y; this.gap = gap;
+                this.alive = true; this.passed = false;
+                this.t = 0;
+            }
+            update(dt, speed) {
+                this.x -= speed * dt;
+                this.t += dt;
+                if (this.x < -80) this.alive = false;
+            }
+            draw(ctx) {
+                const pulse = 1 + Math.sin(this.t * 3) * 0.05;
+                ctx.save();
+                ctx.translate(this.x, 0);
+                // Top bar
+                const topH = this.y - this.gap / 2;
+                const botY = this.y + this.gap / 2;
+                const col = this.passed ? '#00ff88' : '#ffcc00';
+                ctx.strokeStyle = col; ctx.lineWidth = 4;
+                // Ring segments
+                ctx.save();
+                ctx.globalAlpha = 0.8;
+                // Top segment
+                ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, topH); ctx.stroke();
+                // Bottom segment
+                ctx.beginPath(); ctx.moveTo(0, botY); ctx.lineTo(0, H); ctx.stroke();
+                ctx.restore();
+                // Center ring
+                ctx.save();
+                ctx.globalAlpha = this.passed ? 0.5 : 0.9;
+                ctx.strokeStyle = col; ctx.lineWidth = 5;
+                ctx.beginPath(); ctx.arc(0, this.y, this.gap * 0.5 * pulse, 0, PI2); ctx.stroke();
+                ctx.fillStyle = this.passed ? 'rgba(0,255,136,0.1)' : 'rgba(255,200,0,0.08)';
+                ctx.beginPath(); ctx.arc(0, this.y, this.gap * 0.5, 0, PI2); ctx.fill();
+                ctx.restore();
+                ctx.restore();
+            }
+        }
+
+        // ============================================================
+        //  CLOUD / STAR BACKGROUNDS
+        // ============================================================
+        class Cloud {
+            constructor(x, y, r, speed) { this.x = x; this.y = y; this.r = r; this.speed = speed; }
+            update(dt) { this.x -= this.speed * dt; if (this.x < -this.r * 3) this.x = W + this.r * 3; }
+        }
+
+        // ============================================================
+        //  CHALLENGE DEFINITIONS
+        // ============================================================
+        const CHALLENGES = [
+            { level: 1, name: 'First Flight', goal: 'distance', target: 1500, obstacleRate: 0.4, obstacleSpeed: 180 },
+            { level: 2, name: 'Checkpoint Run', goal: 'checkpoint', target: 5, obstacleRate: 0.5, obstacleSpeed: 200 },
+            { level: 3, name: 'Fuel Crisis', goal: 'distance', target: 2500, obstacleRate: 0.6, obstacleSpeed: 220, lowFuel: true },
+            { level: 4, name: 'Bird Storm', goal: 'survive', target: 30, obstacleRate: 0.8, obstacleSpeed: 240, onlyBirds: true },
+            { level: 5, name: 'Night Gauntlet', goal: 'distance', target: 3500, obstacleRate: 0.9, obstacleSpeed: 260, biome: 2 },
+            { level: 6, name: 'Perfect Run', goal: 'distance', target: 2000, obstacleRate: 0.7, obstacleSpeed: 250, mustPerfect: true },
+            { level: 7, name: 'Missile Alley', goal: 'survive', target: 40, obstacleRate: 1.0, obstacleSpeed: 280, onlyMissiles: true },
+            { level: 8, name: 'Endless Horizon', goal: 'distance', target: 5000, obstacleRate: 1.1, obstacleSpeed: 300, biome: 3 },
+        ];
+
+        // ============================================================
+        //  MAIN GAME CONTROLLER
+        // ============================================================
+        class Game {
+            constructor() {
+                this.mode = 'challenge'; // 'challenge' | 'infinite'
+                this.state = 'menu';     // menu|playing|upgrade|gameover
+                this.upgrades = new UpgradeSystem();
+                this.ps = new ParticleSystem();
+                this.challengeLevel = 0;
+                this.score = 0;
+                this.distance = 0;
+                this.bestChallenge = +localStorage.getItem('hs_challenge') || 0;
+                this.bestInfinite = +localStorage.getItem('hs_infinite') || 0;
+                this._initEnv();
+                this._initUI();
+            }
+
+            /* ── ENV ── */
+            _initEnv() {
+                this.clouds = [];
+                for (let i = 0; i < 12; i++) {
+                    this.clouds.push(new Cloud(rnd(0, W), rnd(H * 0.05, H * 0.7), rnd(40, 100), rnd(20, 60)));
+                }
+                this.stars = [];
+                for (let i = 0; i < 120; i++) this.stars.push({ x: rnd(0, W), y: rnd(0, H * 0.7), r: rnd(0.5, 2), twinkle: rnd(0, PI2) });
+                this.biomeIdx = 0;
+                this.biomeT = 0;
+                this.windX = 0; this.windY = 0; this.windTarget = 0; this.windChangeTimer = 0;
+                this.scrollX = 0;
+
+                // FIX: Initialize the game object arrays immediately so they aren't undefined 
+                // when the menu tries to render its first frame.
+                this.obstacles = [];
+                this.collectibles = [];
+                this.checkpoints = [];
+            }
+
+            /* ── UI ── */
+            _initUI() {
+                // High scores
+                const fmt = n => n ? n.toLocaleString() : '—';
+                $('hs-challenge').textContent = fmt(this.bestChallenge);
+                $('hs-infinite').textContent = fmt(this.bestInfinite);
+
+                // Mode buttons
+                $('btn-challenge').onclick = () => this.startGame('challenge');
+                $('btn-infinite').onclick = () => this.startGame('infinite');
+                $('btn-how').onclick = () => this.showScreen('howto-screen');
+                $('btn-howto-back').onclick = () => this.showScreen('menu-screen');
+                $('btn-continue').onclick = () => this.nextLevel();
+                $('btn-play-again').onclick = () => this.startGame(this.mode);
+                $('btn-go-menu').onclick = () => { this.showScreen('menu-screen'); this.state = 'menu'; };
+            }
+
+            showScreen(id) {
+                ['menu-screen', 'howto-screen', 'upgrade-screen', 'gameover-screen'].forEach(s => {
+                    $(s).classList.toggle('hidden', $(s).id !== id);
+                });
+            }
+
+            /* ── START GAME ── */
+            startGame(mode) {
+                this.mode = mode;
+                this.score = 0;
+                this.distance = 0;
+                this.combo = 1;
+                this.comboTimer = 0;
+                this.perfectRun = true;
+
+                if (mode === 'challenge') {
+                    this.challengeLevel = 0;
+                    this.upgrades = new UpgradeSystem();
+                    this._startLevel();
+                } else {
+                    // Infinite
+                    this.infiniteDiff = 1;
+                    this.diffTimer = 0;
+                    this._setupInfinite();
+                    this._startPlaying();
+                }
+            }
+
+            _startLevel() {
+                if (this.challengeLevel >= CHALLENGES.length) {
+                    // All levels done → victory
+                    this._endGame(true);
+                    return;
+                }
+                this.currentChallenge = CHALLENGES[this.challengeLevel];
+                this.biomeIdx = this.currentChallenge.biome || 0;
+                this._setupChallenge(this.currentChallenge);
+                this._startPlaying();
+                this._flashLevelBanner(`LEVEL ${this.challengeLevel + 1}: ${this.currentChallenge.name.toUpperCase()}`);
+            }
+
+            _setupChallenge(ch) {
+                this.obstacles = [];
+                this.collectibles = [];
+                this.checkpoints = [];
+                this.obstacleTimer = 0;
+                this.cpTimer = 0;
+                this.puTimer = 0;
+                this.surviveTimer = 0;
+                this.cpPassed = 0;
+                this.missionProgress = 0;
+                this.obstacleSpeed = ch.obstacleSpeed;
+                this.obstacleRate = ch.obstacleRate;
+                this.scrollSpeed = ch.obstacleSpeed * 0.6;
+                if (ch.lowFuel) this.plane && (this.plane.fuel = 30);
+            }
+
+            _setupInfinite() {
+                this.obstacles = [];
+                this.collectibles = [];
+                this.checkpoints = [];
+                this.obstacleTimer = 0;
+                this.cpTimer = 0;
+                this.puTimer = 0;
+                this.surviveTimer = 0;
+                this.cpPassed = 0;
+                this.missionProgress = 0;
+                this.obstacleSpeed = 160;
+                this.obstacleRate = 0.3;
+                this.scrollSpeed = 100;
+            }
+
+            _startPlaying() {
+                this.plane = new Plane(this.upgrades);
+                this.ps.clear();
+                this.state = 'playing';
+                this.showScreen(''); // hide all overlay screens
+                $('hud').classList.remove('hidden');
+                this._updateMissionHUD();
+            }
+
+            /* ── LEVEL / MISSION HUD ── */
+            _updateMissionHUD() {
+                const ch = this.currentChallenge;
+                if (!ch || this.mode === 'infinite') {
+                    $('hud-mission-wrap').style.display = 'none';
+                    return;
+                }
+                $('hud-mission-wrap').style.display = '';
+                let txt = '';
+                switch (ch.goal) {
+                    case 'distance': txt = `${Math.floor(this.missionProgress)}/${ch.target}m`; break;
+                    case 'checkpoint': txt = `${this.cpPassed}/${ch.target} rings`; break;
+                    case 'survive': txt = `${Math.floor(this.surviveTimer)}/${ch.target}s`; break;
+                }
+                $('hud-mission').textContent = txt;
+            }
+
+            /* ── GAME LOOP ── */
+            start() {
+                let last = 0;
+                const loop = (ts) => {
+                    const dt = Math.min((ts - last) / 1000, 0.05);
+                    last = ts;
+                    this.update(dt);
+                    this.render();
+                    requestAnimationFrame(loop);
+                };
+                requestAnimationFrame(loop);
+            }
+
+            update(dt) {
+                if (this.state !== 'playing') return;
+
+                Shake.update(dt);
+
+                // Wind
+                this.windChangeTimer -= dt;
+                if (this.windChangeTimer <= 0) {
+                    this.windTarget = rnd(-1, 1);
+                    this.windChangeTimer = rnd(3, 8);
+                }
+                this.windX = lerp(this.windX, this.windTarget, dt);
+
+                // Scroll
+                this.scrollX += this.scrollSpeed * dt;
+                this.biomeT += dt * 0.05;
+
+                // Plane
+                this.plane.update(dt, this.windX, this.windY);
+
+                // Fuel check
+                if (this.plane.dead) { this._die(); return; }
+
+                // Distance / score
+                const distGain = this.scrollSpeed * dt / 2;
+                this.distance += distGain;
+                this.score += distGain * this.combo * 0.5;
+
+                // Combo decay
+                this.comboTimer -= dt;
+                if (this.comboTimer <= 0 && this.combo > 1) {
+                    this.combo = Math.max(1, this.combo - 0.5);
+                    this._showCombo();
+                }
+
+                // Mission progress
+                const ch = this.currentChallenge;
+                if (ch) {
+                    if (ch.goal === 'distance') this.missionProgress += distGain;
+                    if (ch.goal === 'survive') this.surviveTimer += dt;
+                }
+                if (this.mode === 'infinite') {
+                    this.surviveTimer += dt;
+                    this.diffTimer += dt;
+                    if (this.diffTimer > 15) { this.diffTimer = 0; this._rampDiff(); }
+                }
+
+                // Spawn obstacles
+                if (this.mode !== 'menu') {
+                    this.obstacleTimer += dt;
+                    const spawnInterval = 1 / this.obstacleRate;
+                    if (this.obstacleTimer >= spawnInterval) {
+                        this.obstacleTimer = 0;
+                        this._spawnObstacle();
+                    }
+
+                    // Spawn power-ups
+                    this.puTimer += dt;
+                    if (this.puTimer > rnd(5, 12)) { this.puTimer = 0; this._spawnPowerup(); }
+
+                    // Spawn checkpoints (infinite / checkpoint levels)
+                    if (this.mode === 'infinite' || (ch && ch.goal === 'checkpoint')) {
+                        this.cpTimer += dt;
+                        if (this.cpTimer > rnd(4, 7)) { this.cpTimer = 0; this._spawnCheckpoint(); }
+                    }
+                }
+
+                // Update all game objects
+                this.obstacles = this.obstacles.filter(o => { o.update(dt); return o.alive; });
+                this.collectibles = this.collectibles.filter(c => { c.update(dt, this.scrollSpeed); return c.alive; });
+                this.checkpoints = this.checkpoints.filter(cp => { cp.update(dt, this.scrollSpeed); return cp.alive; });
+                this.ps.update(dt);
+
+                // Magnet effect
+                if (this.plane.hasPowerup('magnet')) {
+                    this.collectibles.forEach(c => {
+                        const dx = this.plane.x - c.x, dy = this.plane.y - c.y;
+                        const d = Math.hypot(dx, dy);
+                        if (d < 200) { c.x += dx / d * 150 * dt; c.y += dy / d * 150 * dt; }
+                    });
+                }
+
+                // Collisions
+                this._checkCollisions();
+
+                // Clouds
+                this.clouds.forEach(c => c.update(dt));
+
+                // Mission complete check
+                this._checkMissionComplete();
+
+                // Update HUD
+                this._updateHUD();
+            }
+
+            _rampDiff() {
+                this.infiniteDiff = Math.min(this.infiniteDiff + 0.15, 5);
+                this.obstacleSpeed = 160 + this.infiniteDiff * 50;
+                this.obstacleRate = 0.3 + this.infiniteDiff * 0.2;
+                this.scrollSpeed = 100 + this.infiniteDiff * 35;
+                if (this.infiniteDiff > 2) this.biomeIdx = 1;
+                if (this.infiniteDiff > 3.5) this.biomeIdx = 2;
+            }
+
+            _spawnObstacle() {
+                const ch = this.currentChallenge;
+                let types;
+                if (ch && ch.onlyBirds) types = ['bird', 'bird', 'bird'];
+                else if (ch && ch.onlyMissiles) types = ['missile', 'missile'];
+                else types = ['mountain', 'mountain', 'building', 'bird', 'missile', 'balloon'];
+
+                const type = types[rndI(0, types.length - 1)];
+                const spd = this.obstacleSpeed * (0.8 + Math.random() * 0.5);
+                let y;
+                if (type === 'mountain' || type === 'building') y = H;
+                else y = rnd(H * 0.12, H * 0.85);
+                this.obstacles.push(new Obstacle(W + 80, y, type, spd));
+            }
+
+            _spawnPowerup() {
+                const typeObj = PU_TYPES[rndI(0, PU_TYPES.length - 1)];
+                this.collectibles.push(new Collectible(W + 60, rnd(H * 0.1, H * 0.85), typeObj));
+            }
+
+            _spawnCheckpoint() {
+                const y = rnd(H * 0.2, H * 0.8);
+                this.checkpoints.push(new Checkpoint(W + 60, y, 90));
+            }
+
+            _checkCollisions() {
+                const pb = this.plane.bounds;
+                const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+                // Obstacle collisions
+                this.obstacles.forEach(o => {
+                    if (!o.alive) return;
+                    if (hit(pb, o.bounds)) {
+                        if (this.plane.takeDamage(25)) {
+                            Shake.trigger(12, 0.4);
+                            this.ps.emit(this.plane.x, this.plane.y, 20, {
+                                minSpd: 60, maxSpd: 200, minLife: 0.3, maxLife: 0.8,
+                                colors: ['#ff4400', '#ff8800', '#ffcc00', '#fff'], gravity: 80
+                            });
+                            this.perfectRun = false;
+                            this.combo = 1; this._showCombo();
+                            this.score = Math.max(0, this.score - 50);
+                        }
+                    }
+                });
+
+                // Collectible collisions
+                this.collectibles = this.collectibles.filter(c => {
+                    if (!hit(pb, c.bounds)) return true;
+                    this._collectPowerup(c);
+                    return false;
+                });
+
+                // Checkpoint collisions
+                this.checkpoints.forEach(cp => {
+                    if (cp.passed) return;
+                    if (this.plane.x > cp.x && this.plane.x < cp.x + 20) {
+                        const inGap = this.plane.y > cp.y - cp.gap / 2 && this.plane.y < cp.y + cp.gap / 2;
+                        if (inGap) {
+                            cp.passed = true;
+                            this.cpPassed++;
+                            this.score += 300;
+                            this._toast(`CHECKPOINT! +300`, '#ffcc00');
+                            this.combo = Math.min(this.combo + 0.5, 5);
+                            this.comboTimer = 4;
+                            this._showCombo();
+                            this.ps.emit(cp.x, cp.y, 30, {
+                                minSpd: 50, maxSpd: 120, minLife: 0.4, maxLife: 1,
+                                colors: ['#ffcc00', '#fff', '#00ff88'], gravity: -20
+                            });
+                        }
+                    }
+                });
+            }
+
+            _collectPowerup(c) {
+                const dur = 8;
+                switch (c.type) {
+                    case 'fuel':
+                        this.plane.fuel = Math.min(this.plane.maxFuel, this.plane.fuel + 50);
+                        this._toast(`FUEL +50 ⛽`, '#00aaff');
+                        break;
+                    case 'shield':
+                        this.plane.addPowerup('shield', dur);
+                        this._toast(`SHIELD ACTIVE 🛡`, '#00d4ff');
+                        break;
+                    case 'boost':
+                        this.plane.addPowerup('boost', dur * 0.7);
+                        this._toast(`SPEED BOOST ⚡`, '#ffff00');
+                        break;
+                    case 'slow':
+                        this.plane.addPowerup('slow', dur * 0.6);
+                        this._toast(`SLOW MOTION ❄`, '#aaeeff');
+                        // Slow obstacles too
+                        this.obstacles.forEach(o => o.speed *= 0.5);
+                        break;
+                    case 'magnet':
+                        this.plane.addPowerup('magnet', dur);
+                        this._toast(`MAGNET ON 🧲`, '#ff88cc');
+                        break;
+                }
+                this.score += 50;
+                this.ps.emit(c.x, c.y, 15, {
+                    minSpd: 40, maxSpd: 100, minLife: 0.3, maxLife: 0.6,
+                    colors: [c.color, '#fff'], gravity: -30
+                });
+            }
+
+            _checkMissionComplete() {
+                const ch = this.currentChallenge;
+                if (!ch) return;
+                let done = false;
+                switch (ch.goal) {
+                    case 'distance': done = this.missionProgress >= ch.target; break;
+                    case 'checkpoint': done = this.cpPassed >= ch.target; break;
+                    case 'survive': done = this.surviveTimer >= ch.target; break;
+                }
+                if (done) {
+                    // Bonus points
+                    let bonus = 500 * (this.challengeLevel + 1);
+                    if (this.perfectRun && ch.mustPerfect) bonus *= 2;
+                    if (this.perfectRun) bonus += 200;
+                    this.score += bonus;
+                    this.upgrades.points += Math.floor(this.score / 100) + 200;
+                    this.challengeLevel++;
+                    this._showUpgrade();
+                }
+            }
+
+            _showUpgrade() {
+                this.state = 'upgrade';
+                $('hud').classList.add('hidden');
+                $('upg-points').textContent = this.upgrades.points;
+                this._renderUpgradeGrid();
+                this.showScreen('upgrade-screen');
+            }
+
+            _renderUpgradeGrid() {
+                const grid = $('upgrade-grid');
+                grid.innerHTML = '';
+                UPGRADES.forEach(u => {
+                    const lv = this.upgrades.levels[u.id];
+                    const cost = this.upgrades.cost(u.id);
+                    const maxed = lv >= u.max;
+                    const stars = '★'.repeat(lv) + '☆'.repeat(u.max - lv);
+                    const card = document.createElement('div');
+                    card.className = 'upg-card';
+                    card.innerHTML = `
+        <div class="upg-name">${u.icon} ${u.name}</div>
+        <div class="upg-desc">${u.desc}</div>
+        <div class="upg-stars">${stars}</div>
+        <div class="upg-level">Level ${lv}/${u.max}</div>
+        ${maxed
+                            ? `<div class="upg-max">MAX LEVEL</div>`
+                            : `<button class="btn gold upg-btn" id="upg-${u.id}">UPGRADE — ${cost} pts</button>`
+                        }
+      `;
+                    grid.appendChild(card);
+                    if (!maxed) {
+                        card.querySelector(`#upg-${u.id}`).onclick = () => {
+                            if (this.upgrades.buy(u.id)) {
+                                $('upg-points').textContent = this.upgrades.points;
+                                this._renderUpgradeGrid();
+                            }
+                        };
+                    }
+                });
+            }
+
+            nextLevel() {
+                if (this.challengeLevel >= CHALLENGES.length) { this._endGame(true); return; }
+                this._startLevel();
+            }
+
+            _die() {
+                // Explosion
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        this.ps.emit(this.plane.x + rnd(-20, 20), this.plane.y + rnd(-20, 20), 40, {
+                            minSpd: 50, maxSpd: 300, minLife: 0.4, maxLife: 1.5,
+                            colors: ['#ff4400', '#ff8800', '#ffcc00', '#fff', '#ff2200'], gravity: 60
+                        });
+                    }, i * 150);
+                }
+                Shake.trigger(20, 0.8);
+                setTimeout(() => this._endGame(false), 800);
+                this.state = 'dead';
+            }
+
+            _endGame(won) {
+                this.state = 'gameover';
+                $('hud').classList.add('hidden');
+
+                const isBest = this.mode === 'challenge'
+                    ? this.score > this.bestChallenge
+                    : this.score > this.bestInfinite;
+
+                if (isBest) {
+                    if (this.mode === 'challenge') { this.bestChallenge = Math.floor(this.score); localStorage.setItem('hs_challenge', this.bestChallenge); }
+                    else { this.bestInfinite = Math.floor(this.score); localStorage.setItem('hs_infinite', this.bestInfinite); }
+                }
+                $('hs-challenge').textContent = this.bestChallenge || '—';
+                $('hs-infinite').textContent = this.bestInfinite || '—';
+
+                $('go-title').textContent = won ? '🏆 VICTORY!' : 'GAME OVER';
+                $('go-score').textContent = Math.floor(this.score).toLocaleString();
+                $('go-dist').textContent = Math.floor(this.distance) + 'm';
+                $('go-level').textContent = this.mode === 'challenge' ? `${this.challengeLevel}/${CHALLENGES.length}` : `∞`;
+                $('go-best').textContent = (this.mode === 'challenge' ? this.bestChallenge : this.bestInfinite).toLocaleString();
+                $('go-new-best').style.display = isBest ? '' : 'none';
+
+                this.showScreen('gameover-screen');
+            }
+
+            /* ── RENDER ── */
+            render() {
+                const off = Shake.offset();
+                ctx.save();
+                ctx.translate(off.x, off.y);
+
+                this._drawBackground();
+                this._drawClouds();
+                this.checkpoints.forEach(cp => cp.draw(ctx));
+                this.obstacles.forEach(o => o.draw(ctx));
+                this.collectibles.forEach(c => c.draw(ctx));
+                this.ps.draw(ctx);
+                if (this.state === 'playing' || this.state === 'dead') this.plane.draw(ctx, this.ps);
+                this._drawWindIndicator();
+                this._drawPowerupHUD();
+
+                ctx.restore();
+            }
+
+            _drawBackground() {
+                const biome = BIOMES[this.biomeIdx];
+
+                // Sky gradient
+                const grad = ctx.createLinearGradient(0, 0, 0, H);
+                grad.addColorStop(0, biome.skyTop);
+                grad.addColorStop(1, biome.skyBot);
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+                // Stars
+                if (biome.starAlpha > 0) {
+                    this.stars.forEach(s => {
+                        s.twinkle += 0.02;
+                        const a = biome.starAlpha * (0.5 + 0.5 * Math.sin(s.twinkle));
+                        ctx.save(); ctx.globalAlpha = a;
+                        ctx.fillStyle = '#fff';
+                        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, PI2); ctx.fill();
+                        ctx.restore();
+                    });
+                }
+
+                // Scrolling ground horizon
+                const groundY = H * 0.88;
+                const groundGrad = ctx.createLinearGradient(0, groundY, 0, H);
+                if (this.biomeIdx === 1) { groundGrad.addColorStop(0, '#c06020'); groundGrad.addColorStop(1, '#804010'); }
+                else if (this.biomeIdx === 3) { groundGrad.addColorStop(0, '#c8e4f0'); groundGrad.addColorStop(1, '#80b8d0'); }
+                else { groundGrad.addColorStop(0, '#1a3a10'); groundGrad.addColorStop(1, '#0a1a08'); }
+                ctx.fillStyle = groundGrad; ctx.fillRect(0, groundY, W, H - groundY);
+
+                // Ground pattern lines
+                ctx.save(); ctx.globalAlpha = 0.15; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+                for (let i = 0; i < 8; i++) {
+                    const off2 = (this.scrollX * 0.3) % (W / 4);
+                    ctx.beginPath();
+                    ctx.moveTo(-off2 + i * (W / 4), groundY);
+                    ctx.lineTo(-off2 + i * (W / 4) - 60, H);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            _drawClouds() {
+                const biome = BIOMES[this.biomeIdx];
+                this.clouds.forEach(c => {
+                    ctx.save(); ctx.globalAlpha = 0.6;
+                    ctx.fillStyle = biome.cloudCol + '0.15)';
+                    // Cloud puffs
+                    [-20, 0, 20, 10, -10].forEach((dx, i) => {
+                        ctx.beginPath();
+                        ctx.arc(c.x + dx, c.y + (i % 2 ? -10 : 0), c.r * (0.5 + i * 0.08), 0, PI2);
+                        ctx.fill();
+                    });
+                    ctx.restore();
+                });
+            }
+
+            _drawWindIndicator() {
+                if (Math.abs(this.windX) < 0.1) return;
+                ctx.save(); ctx.globalAlpha = 0.5;
+                ctx.fillStyle = this.windX > 0 ? '#88aaff' : '#ffaa88';
+                ctx.font = '0.9rem Rajdhani'; ctx.textAlign = 'left';
+                ctx.fillText(this.windX > 0 ? '→ WIND' : '← WIND', 12, H - 20);
+                ctx.restore();
+            }
+
+            _drawPowerupHUD() {
+                const icons = $('powerup-icons');
+                icons.innerHTML = '';
+                this.plane && this.plane.powerups.forEach(p => {
+                    const typeObj = PU_TYPES.find(t => t.type === p.type);
+                    if (!typeObj) return;
+                    const div = document.createElement('div');
+                    div.className = 'pu-icon';
+                    div.style.color = typeObj.color;
+                    div.style.borderColor = typeObj.color;
+                    div.innerHTML = typeObj.icon;
+                    const bar = document.createElement('div');
+                    bar.className = 'pu-timer';
+                    bar.style.width = `${(p.timeLeft / p.totalTime) * 100}%`;
+                    div.appendChild(bar);
+                    icons.appendChild(div);
+                });
+            }
+
+            /* ── HUD ── */
+            _updateHUD() {
+                $('hud-score').textContent = Math.floor(this.score).toLocaleString();
+                $('hud-dist').textContent = Math.floor(this.distance) + 'm';
+                $('hud-level').textContent = this.mode === 'infinite'
+                    ? `∞ x${this.infiniteDiff?.toFixed(1) || 1}`
+                    : `${this.challengeLevel + 1}/${CHALLENGES.length}`;
+
+                const hp = this.plane.health / this.plane.maxHealth * 100;
+                const fp = this.plane.fuel / this.plane.maxFuel * 100;
+                $('bar-health').style.width = hp + '%';
+                $('bar-fuel').style.width = fp + '%';
+                if (fp < 25) { $('bar-fuel').style.background = 'linear-gradient(90deg,#ff4400,#ff8800)'; }
+                else { $('bar-fuel').style.background = ''; }
+
+                this._updateMissionHUD();
+            }
+
+            _showCombo() {
+                const banner = $('combo-banner');
+                $('combo-num').textContent = this.combo.toFixed(1);
+                banner.style.opacity = this.combo > 1 ? '1' : '0';
+            }
+
+            _toast(msg, color = '#00ff88') {
+                const el = $('toast');
+                el.textContent = msg;
+                el.style.color = color;
+                el.style.textShadow = `0 0 10px ${color}`;
+                el.style.opacity = '1';
+                clearTimeout(this._toastTimer);
+                this._toastTimer = setTimeout(() => el.style.opacity = '0', 2000);
+            }
+
+            _flashLevelBanner(txt) {
+                const el = $('level-banner');
+                el.textContent = txt;
+                el.style.opacity = '1';
+                setTimeout(() => { el.style.transition = 'opacity 1s'; el.style.opacity = '0'; }, 2000);
+                setTimeout(() => { el.style.transition = ''; }, 3000);
+            }
+        }
+
+        // ============================================================
+        //  BOOT
+        // ============================================================
+        const game = new Game();
+        game.start();
+    </script>
+</body>
+
+</html>
